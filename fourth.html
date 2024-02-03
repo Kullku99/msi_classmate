@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.0.3"></script>
+    <title>Flip n Earn</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #header {
+            margin-top: 20px;
+        }
+
+        #container {
+            display: flex;
+            justify-content: space-between;
+            width: 70%;
+            /* Adjust the width as needed */
+            margin: 0 auto;
+        }
+
+        #left-section {
+            text-align: left;
+            margin-left: -100px;
+            margin-bottom: 20px;
+        }
+
+        #right-section {
+            text-align: left;
+            margin-right: -20px;
+            margin-bottom: 20px;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(5, 100px);
+            gap: 10px;
+        }
+
+        .card {
+            width: 100px;
+            height: 100px;
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.4s;
+            cursor: pointer;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card .face {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        .card .front-face {
+            background-color: #3498db;
+            color: #fff;
+        }
+
+        .card .front-face img {
+            width: 100%;
+            height: 100%;
+            border-radius: 5px;
+        }
+
+        .card .back-face {
+            background-color: lightgreen;
+            color: #fff;
+            transform: rotateY(180deg);
+        }
+
+        .card .back-face img {
+            width: 100%;
+            height: 100%;
+            border-radius: 5px;
+        }
+    </style>
+
+    <!-- Add the following inline styles to the SweetAlert popup -->
+    <style>
+        .swal2-popup {
+            text-align: center !important;
+        }
+
+        .swal2-html-container {
+            text-align: center !important;
+        }
+
+        .terms-popup .swal2-html-container {
+            text-align: left !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="header">
+        <h1>📚FLIP ME & WIN HUGE DISCOUNTS🎁</h1>
+    </div>
+
+    <!-- Container with Left Section, Right Section, and Game Board -->
+    <div id="container">
+        <!-- Left Section with Text -->
+        <div id="left-section">
+            <h2>How To Play?</h2>
+            <p>👆1. Tap on the Block to flip it.</p>
+            <p>3️⃣2. Tap 3 Blocks one after the other.</p>
+            <p>🤳3. There are 3 trials to flip 3 Blocks.</p>
+            <p>🃏4. Get 3 same images in a Single Trial.</p>
+            <p>💱5. Win Discounts!</p>
+        </div>
+
+        <!-- Game board -->
+        <div id="game-board"></div>
+
+        <!-- Right Section with Text -->
+        <div id="right-section">
+            <h3 id="termsConditionsBtn" style="cursor: pointer;">See- Terms & Conditions</h3>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.0.3"></script>
+
+    <script>
+        const images = [
+            "https://previews.123rf.com/images/dekay/dekay1901/dekay190100101/126347912-stationery-hand-drawn-vector-doodle-illustration-blank-frame-square-blue-crayon-pencils-border.jpg",
+            "https://www.tafetribe.com/pub/media/catalog/product/cache/343ef2803f1a27d8d77b5e62acabb37c/s/q/square_pen_-_red_silver.jpg",
+            "https://i.ebayimg.com/images/g/xhgAAOSw8zJktJz6/s-l1200.jpg",
+            "https://storage.googleapis.com/staples_canada_assets/f/8/4/5/f845ec9d74d967248b51d65e7931a217ef3f30ef_square24313_1.png",
+            "https://image.made-in-china.com/2f0j00sFCipmrBSScG/Personalized-Custom-Print-A5-Logo-Hardcover-School-Classmate-Spiral-Journal-Notebook.webp"
+        ];
+
+        let cards = [];
+        let remainingAttempts = 3;
+        let gamePlayed = false;
+        let lockBoard = false;
+        let gameEnded = false;
+
+        const imagesPairs = images.concat(images, images, images, images);
+        imagesPairs.sort(() => Math.random() - 0.5);
+
+        const gameBoard = document.getElementById('game-board');
+
+        for (const imagePath of imagesPairs) {
+            const card = document.createElement('div');
+            card.classList.add('card');
+
+            const cardInner = document.createElement('div');
+            cardInner.classList.add('card-inner');
+
+            const frontFace = document.createElement('div');
+            frontFace.classList.add('face', 'front-face');
+
+            const image = document.createElement('img');
+            image.src = "https://yt3.googleusercontent.com/ytc/AIf8zZT6bIDr0wBy2frtIRgICY6U3C5GJ4TM5R4Wjq4y=s900-c-k-c0x00ffffff-no-rj";
+            image.alt = 'Image';
+
+            frontFace.appendChild(image);
+
+            const backFace = document.createElement('div');
+            backFace.classList.add('face', 'back-face');
+
+            const backImage = document.createElement('img');
+            backImage.src = imagePath;
+            backImage.alt = 'Image';
+
+            backFace.appendChild(backImage);
+
+            cardInner.appendChild(frontFace);
+            cardInner.appendChild(backFace);
+
+            card.appendChild(cardInner);
+            gameBoard.appendChild(card);
+
+            cards.push({ card, imagePath, isFlipped: false });
+        }
+
+        cards.forEach(card => {
+            card.card.addEventListener('click', () => flipCard(card));
+        });
+
+        let flippedCards = [];
+
+        function flipCard(card) {
+            if (lockBoard || gamePlayed || gameEnded) return;
+            if (card.isFlipped) return;
+
+            card.card.classList.add('flipped');
+            card.isFlipped = true;
+            flippedCards.push(card);
+
+            if (flippedCards.length === 3) {
+                checkForMatch();
+            }
+        }
+
+        function checkForMatch() {
+            const isMatch = flippedCards.every(c => c.imagePath === flippedCards[0].imagePath);
+
+            if (isMatch) {
+                disableCards();
+                showCongratulations();
+            } else {
+                unflipCards();
+            }
+        }
+
+        function showCongratulations() {
+            gamePlayed = true;
+            Swal.fire({
+                title: 'CONGRATULATIONS!',
+                text: 'You won a discount of 20% on your cart!',
+                icon: 'success',
+                didRender: () => {
+                    triggerConfetti();
+                },
+                onClose: () => {
+                    resetBoard();
+                }
+            });
+        }
+
+        function triggerConfetti() {
+            confetti({
+                particleCount: 1000,
+                spread: 120,
+                origin: { y: 0.8 }
+            });
+        }
+
+        function disableCards() {
+            flippedCards.forEach(card => {
+                card.card.removeEventListener('click', () => flipCard(card));
+            });
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+
+            setTimeout(() => {
+                flippedCards.forEach(card => {
+                    card.card.classList.remove('flipped');
+                    card.isFlipped = false;
+                });
+
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            flippedCards = [];
+            lockBoard = false;
+            reshuffleBoard();
+            remainingAttempts--;
+
+            if (remainingAttempts === 0) {
+                showGameOver();
+            }
+        }
+
+        function showGameOver() {
+            Swal.fire({
+                title: 'SORRY! Better luck next time',
+                text: 'You have completed 3 attempts. Game over!',
+                icon: 'info'
+            });
+
+            gameEnded = true;
+        }
+
+        function reshuffleBoard() {
+            imagesPairs.sort(() => Math.random() - 0.5);
+
+            cards.forEach((card, index) => {
+                card.imagePath = imagesPairs[index];
+                card.card.querySelector('.back-face img').src = card.imagePath;
+            });
+        }
+
+        const termsConditionsBtn = document.getElementById('termsConditionsBtn');
+
+        termsConditionsBtn.addEventListener('click', () => {
+            showTermsConditionsPopup();
+        });
+
+        function showTermsConditionsPopup() {
+            Swal.fire({
+                title: 'Terms & Conditions',
+                html: `
+                    <ul>
+                        <p>This "Flip & Win" contest is exclusively brought to you by Classmate Distribution Services. Please read these terms and conditions ("T&Cs") before entering the Contest. You agree that, by participating in this Contest, you will be bound by this Eligibility, and you acknowledge and agree that you satisfy all Contest eligibility requirements as provided herein below.</p>
+                    </ul>
+                    <h2>Eligibility:</h2>
+                    <ul>
+                        <li>You should be an individual legal resident of the Republic of India;</li>
+                        <li>You should have set India as your current country in your account settings when you play the game; </li>
+                        <li>You have a billing address within the territory of India;</li>
+                        <li>You should be of an age 10 years or above till 35 years at the time of entry into the Contest;</li>
+                        <li>You should enter this Contest through the mobile application by scanning the code provided by our distributor; and</li>
+                        <li>You should have a valid proof of identity and age in the form of a copy of PAN Card / Driving License / Voter ID / Indian passport. Employees of Amazon, their immediate family members (spouses, domestic partners, parents, grandparents, siblings, children and grandchildren), and Classmate’s affiliates, advisors, and advertising / contest agencies are not eligible to enter the Contest.</li>
+                    </ul>
+                `,
+                icon: 'info',
+                confirmButtonText: 'Close',
+                customClass: {
+                    container: 'terms-popup' // Add a custom class for styling this popup
+                }
+            });
+        }
+    </script>
+
+</body>
+
+</html>
